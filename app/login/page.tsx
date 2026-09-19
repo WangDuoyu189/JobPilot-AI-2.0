@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createBrowserSupabase } from "@/lib/supabase";
+import { createBrowserSupabase } from "@/lib/supabase-browser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -36,7 +36,6 @@ export default function Login() {
         <Link href="/">
           <b>← JobPilot AI</b>
         </Link>
-
         <h2>{signup ? "创建账号" : "登录 JobPilot AI"}</h2>
         <p className="muted">保存你的分析记录，并解锁付费功能。</p>
 
@@ -54,11 +53,7 @@ export default function Login() {
           type="password"
         />
 
-        <button
-          className="btn dark"
-          style={{ width: "100%" }}
-          onClick={submit}
-        >
+        <button className="btn dark" style={{ width: "100%" }} onClick={submit}>
           {signup ? "注册" : "登录"}
         </button>
 
