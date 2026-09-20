@@ -8,6 +8,7 @@ const envId =
 
 export const app = cloudbase.init({
   env: envId,
+  region: "ap-shanghai",
 });
 
 export const auth = app.auth({
