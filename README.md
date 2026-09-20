@@ -1,19 +1,49 @@
 # JobPilot AI 2.0
 
-一个可以部署成真实 SaaS 的 AI 求职产品。
+面向中文求职场景的 AI 求职 SaaS。
 
-## 技术栈
+## 当前产品方向
 
-- Next.js App Router
-- TypeScript
-- OpenAI Responses API
-- Supabase Auth + Postgres
-- Stripe Checkout
-- Vercel 部署
+这个版本先把产品体验和 UI 做成完整 SaaS，而不是简单的“文字堆积页”。
 
-OpenAI 官方 JS SDK 当前支持 `responses.create()`；本项目把 API Key 放在服务端环境变量中，不暴露给浏览器。
-Supabase 官方 Next.js SSR 方案使用 `@supabase/ssr` 和 Cookie 会话。
-Stripe Checkout 支持 subscription 模式，并在服务端创建 Checkout Session。
+首页包含：
+- Hero 产品展示区
+- 简历 × JD 智能分析工作台
+- 匹配度与关键词结果
+- 功能展示
+- 3 步工作流
+- 定价区
+- 登录页
+- 用户 Dashboard
+
+## 国内生产架构
+
+最终面向中国大陆用户时，不再以 Vercel / Supabase / Stripe / OpenAI 作为生产主链路。
+
+推荐架构：
+
+- 前端与 SSR/API：腾讯云 CloudBase
+- 用户认证：CloudBase 身份认证
+- 数据库：CloudBase MySQL
+- AI：DeepSeek / 阿里云百炼 / 腾讯混元，可通过环境变量切换
+- 国内支付：微信支付 / 支付宝
+- 域名：国内服务商 + ICP 备案
+
+腾讯云 CloudBase 官方文档目前支持 Next.js SSR 与 API Routes 的部署，并提供身份认证、数据库、云函数、云托管等能力。
+
+## AI Provider
+
+后端通过 OpenAI 兼容 SDK 调用模型，但“OpenAI”这里只是客户端 SDK，不代表生产模型必须使用 OpenAI。
+
+当前默认示例：
+
+- AI_BASE_URL=https://api.deepseek.com
+- AI_MODEL=deepseek-flash
+
+可切换到其他兼容 OpenAI API 的国内模型服务，只需修改：
+- AI_API_KEY
+- AI_BASE_URL
+- AI_MODEL
 
 ## 本地启动
 
@@ -23,76 +53,42 @@ cp .env.example .env.local
 npm run dev
 ```
 
-然后打开 http://localhost:3000
+## Vercel
 
-## 配置 Supabase
+当前 Vercel 地址只作为开发/预览环境：
 
-1. 创建 Supabase 项目。
-2. 在 SQL Editor 执行 `supabase/schema.sql`。
-3. 在 Project Connect 中取得：
-   - NEXT_PUBLIC_SUPABASE_URL
-   - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-4. 填入 `.env.local`。
+https://job-pilot-ai-2-0.vercel.app
 
-## 配置 OpenAI
+正式面向中国大陆用户时，迁移到腾讯云 CloudBase。
 
-设置：
-OPENAI_API_KEY=你的服务端 API Key
-OPENAI_MODEL=gpt-5
+## CloudBase 生产部署
 
-## 配置 Stripe
+腾讯云 CloudBase 官方支持：
+- Next.js SSR
+- API Routes
+- 身份认证
+- MySQL / 文档型数据库
+- 云函数 / 云托管
+- 自定义域名
 
-1. 创建一个订阅产品，例如 JobPilot Pro。
-2. 创建月度 Price。
-3. 设置 STRIPE_PRO_PRICE_ID。
-4. 设置 STRIPE_SECRET_KEY。
-5. 设置 STRIPE_WEBHOOK_SECRET。
-6. Stripe webhook 指向：
-   https://你的域名/api/webhook
+中国大陆正式生产域名需要按照要求完成 ICP 备案。
 
-生产环境建议监听：
-- checkout.session.completed
-- customer.subscription.deleted
-- customer.subscription.updated
-- invoice.paid
-- invoice.payment_failed
+## 当前状态
 
-然后在 webhook 中同步 Supabase 的 profiles.plan。
+- GitHub：已连接
+- Vercel：已部署成功，可作为预览
+- UI：已重做
+- AI 接口：已改成国内模型服务抽象
+- Supabase：之前的测试环境可保留，但不作为最终国内生产方案
+- Stripe：不作为最终国内支付方案
 
-## 部署 Vercel
+## 下一阶段
 
-把项目上传 GitHub，在 Vercel 导入。
-
-在 Vercel Project Settings → Environment Variables 中添加 .env.local 的变量。
-
-部署后修改：
-NEXT_PUBLIC_SITE_URL=https://你的真实域名
-
-## 现在已经实现
-
-- 营销首页
-- 免费分析 UI
-- OpenAI AI 分析 API
-- Supabase 邮箱登录/注册
-- 用户工作台
-- Stripe Pro 订阅 Checkout
-- Stripe webhook 骨架
-- Supabase 数据库 schema
-- 移动端适配
-
-## 下一步商业化
-
-建议按顺序做：
-
-1. 接真实 Stripe 收款
-2. 给 Free 用户做每日额度
-3. Pro 用户无限/高额度
-4. 保存分析历史
-5. AI 一键重写简历
-6. AI 生成求职信
-7. AI 模拟面试
-8. SEO 岗位页面
-9. Referral 邀请奖励
-10. 企业版招聘工具
-
-收入不能保证；上线后需要通过真实用户、转化率和获客成本验证商业模式。
+1. CloudBase 环境
+2. CloudBase Auth
+3. CloudBase MySQL
+4. 国内 AI 正式接入
+5. 微信支付 / 支付宝
+6. 自定义域名 + ICP 备案
+7. SEO、数据统计、额度系统
+8. 正式上线
