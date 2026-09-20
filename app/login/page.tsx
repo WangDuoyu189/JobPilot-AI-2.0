@@ -31,41 +31,28 @@ export default function Login() {
   }
 
   return (
-    <main className="auth">
-      <div className="card">
-        <Link href="/">
-          <b>← JobPilot AI</b>
-        </Link>
-        <h2>{signup ? "创建账号" : "登录 JobPilot AI"}</h2>
-        <p className="muted">保存你的分析记录，并解锁付费功能。</p>
+    <main className="auth-page">
+      <div className="auth-brand">
+        <Link href="/" className="brand"><span className="brand-mark">J</span><span>JobPilot<span className="brand-accent"> AI</span></span></Link>
+        <div className="auth-quote"><span>“</span><h1>把求职准备做在<br />面试之前。</h1><p>简历分析、岗位匹配、面试准备，集中在一个清晰的工作台里。</p></div>
+        <div className="auth-mini-card"><div><b>82%</b><small>平均匹配度</small></div><div><b>18</b><small>本周分析</small></div><div><b>06</b><small>待跟进岗位</small></div></div>
+      </div>
 
-        <label>邮箱</label>
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          type="email"
-        />
+      <div className="auth-panel-wrap">
+        <div className="auth-panel">
+          <div className="auth-panel-head"><span className="eyebrow">WELCOME</span><h2>{signup ? "创建你的求职工作台" : "欢迎回到 JobPilot"}</h2><p>{signup ? "注册后保存你的分析记录和求职进度。" : "登录后继续你的求职分析。"}</p></div>
+          <div className="auth-tabs"><button className={!signup ? "active" : ""} onClick={() => {setSignup(false);setMsg("")}}>登录</button><button className={signup ? "active" : ""} onClick={() => {setSignup(true);setMsg("")}}>注册</button></div>
 
-        <label>密码</label>
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-        />
+          <label>邮箱</label>
+          <input className="auth-input" value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="you@example.com" />
+          <label>密码</label>
+          <input className="auth-input" value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="至少 6 位字符" />
 
-        <button className="btn dark" style={{ width: "100%" }} onClick={submit}>
-          {signup ? "注册" : "登录"}
-        </button>
+          <button className="btn btn-primary auth-submit" onClick={submit}>{signup ? "创建账号" : "登录"} <span>→</span></button>
+          {msg && <div className="auth-message">{msg}</div>}
 
-        {msg && <p className="notice">{msg}</p>}
-
-        <button
-          className="btn light"
-          style={{ width: "100%", marginTop: 10 }}
-          onClick={() => setSignup(!signup)}
-        >
-          {signup ? "已有账号？登录" : "没有账号？注册"}
-        </button>
+          <div className="auth-foot">继续即表示你同意服务条款与隐私说明。</div>
+        </div>
       </div>
     </main>
   );
