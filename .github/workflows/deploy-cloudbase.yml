@@ -34,5 +34,5 @@ jobs:
 
       - name: Deploy to CloudBase Run
         run: |
-          tcb cloudrun deploy -e "${{ secrets.TCB_ENV_ID }}" -s jobpilot-ai --port 3000 --force --yes --wait
+          tcb cloudrun deploy -e "${{ secrets.TCB_ENV_ID }}" -s jobpilot-ai --port 3000 --force --yes
 
