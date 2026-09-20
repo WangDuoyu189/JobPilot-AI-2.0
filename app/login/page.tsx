@@ -8,7 +8,7 @@ import { setSessionCookie } from "./actions";
 
 function normalizePhone(input: string) {
   const value = input.trim().replace(/\s+/g, "");
-  if (/^1\d{10}$/.test(value)) return \`+86\${value}\`;
+  if (/^1\d{10}$/.test(value)) return "+86" + value;
   if (/^\+861\d{10}$/.test(value)) return value;
   return "";
 }
@@ -215,7 +215,7 @@ export default function Login() {
               disabled={countdown > 0 || !normalizedPhone}
               onClick={sendCode}
             >
-              {countdown > 0 ? \`\${countdown}s\` : "获取验证码"}
+              {countdown > 0 ? countdown + "s" : "获取验证码"}
             </button>
           </div>
 
