@@ -24,10 +24,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Next.js standalone
+      - name: Build Next.js
         run: npm run build
 
-      - name: Prepare standalone assets
+      - name: Prepare CloudBase standalone assets
         shell: bash
         run: |
           mkdir -p .next/standalone/public
@@ -35,12 +35,15 @@ jobs:
           cp -r public/. .next/standalone/public/
           cp -r .next/static .next/standalone/.next/static
 
-      - name: Install CloudBase CLI
+      - name: Install CloudBase CLI V3
         run: npm install -g @cloudbase/cli
 
       - name: Login to CloudBase
         run: tcb login --apiKeyId "${{ secrets.TCB_SECRET_ID }}" --apiKey "${{ secrets.TCB_SECRET_KEY }}"
 
-      - name: Deploy to CloudBase HTTP Function
+      - name: Deploy HTTP function
         run: |
-          tcb fn deploy jobpilot-ai-web             --dir .next/standalone             --path /             --force             -e "${{ secrets.TCB_ENV_ID }}"             --json
+          tcb fn deploy jobpilot-ai-web             --path .             --override             -e "${{ secrets.TCB_ENV_ID }}"             --json
+
+      - name: Show routes
+        run: tcb routes list -e "${{ secrets.TCB_ENV_ID }}" --json || true
