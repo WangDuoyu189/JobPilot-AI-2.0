@@ -82,7 +82,7 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      const loginState = await auth.signInWithSms({
+      const loginState: any = await auth.signInWithSms({
         verificationInfo,
         verificationCode: code.trim(),
         phoneNum: normalizedPhone,
