@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.github
+.vercel
+.env
+.env.local
+supabase
+README.md
+DEPLOY_CHECKLIST.md
+CLOUDBASE_DEPLOY.md
+*.log
