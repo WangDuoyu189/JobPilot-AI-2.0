@@ -29,6 +29,7 @@ jobs:
       - name: Prepare CloudBase standalone assets
         shell: bash
         run: |
+          chmod +x scf_bootstrap
           mkdir -p .next/standalone/public
           mkdir -p .next/standalone/.next
           cp -r public/. .next/standalone/public/
