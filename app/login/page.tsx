@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/lib/cloudbase";
+import { getAuth } from "@/lib/cloudbase";
 import { setSessionCookie } from "./actions";
 
 function normalizePhone(input: string) {
@@ -36,7 +36,7 @@ export default function Login() {
     }
 
     try {
-      const info = await auth.getVerification({
+      const info = await getAuth().getVerification({
         phone_number: normalizedPhone,
       });
 
@@ -82,7 +82,7 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      const loginState: any = await auth.signInWithSms({
+      const loginState: any = await getAuth().signInWithSms({
         verificationInfo,
         verificationCode: code.trim(),
         phoneNum: normalizedPhone,
