@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -26,7 +26,7 @@ jobs:
       - name: Build Next.js
         run: npm run build
 
-      - name: Prepare CloudBase standalone assets
+      - name: Prepare CloudBase standalone package
         shell: bash
         run: |
           chmod +x scf_bootstrap
@@ -34,6 +34,8 @@ jobs:
           mkdir -p .next/standalone/.next
           cp -r public/. .next/standalone/public/
           cp -r .next/static .next/standalone/.next/static
+          cp scf_bootstrap .next/standalone/scf_bootstrap
+          chmod +x .next/standalone/scf_bootstrap
 
       - name: Install CloudBase CLI V3
         run: npm install -g @cloudbase/cli
@@ -43,7 +45,7 @@ jobs:
 
       - name: Deploy HTTP function
         run: |
-          tcb fn deploy jobpilot-ai-web             --path .             --override             -e "${{ secrets.TCB_ENV_ID }}"             --json
+          tcb fn deploy jobpilot-ai-web             --dir .next/standalone             --httpFn             --runtime Nodejs22.21             --install-dependency false             --force             --yes             --path /             -e "${{ secrets.TCB_ENV_ID }}"             --json
 
-      - name: Show routes
-        run: tcb routes list -e "${{ secrets.TCB_ENV_ID }}" --json || true
+      - name: Show function list
+        run: tcb fn list -e "${{ secrets.TCB_ENV_ID }}" --json
