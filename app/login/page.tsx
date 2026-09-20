@@ -17,7 +17,7 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [signup, setSignup] = useState(false);
-  const [verificationInfo, setVerificationInfo] = useState<unknown>(null);
+  const [verificationInfo, setVerificationInfo] = useState<any>(null);
   const [countdown, setCountdown] = useState(0);
   const [msg, setMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
