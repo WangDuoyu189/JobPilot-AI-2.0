@@ -93,11 +93,15 @@ export default function Login() {
         loginState?.user?.userId ??
         loginState?.uid;
 
-      if (!accessToken || !uid) {
+      if (!accessToken) {
         throw new Error("登录成功，但未能建立网站登录态，请重试。");
       }
 
-      await setSessionCookie(accessToken, String(uid), normalizedPhone);
+      await setSessionCookie(
+        accessToken,
+        uid ? String(uid) : "pending",
+        normalizedPhone
+      );
       router.push("/dashboard");
       router.refresh();
     } catch (error) {
