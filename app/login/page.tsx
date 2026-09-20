@@ -16,7 +16,7 @@ function normalizePhone(input: string) {
 export default function Login() {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
-  const [verification, setVerification] = useState<(() => Promise<any>) | null>(null);
+  const [verificationInfo, setVerificationInfo] = useState<any>(null);
   const [countdown, setCountdown] = useState(0);
   const [msg, setMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +24,7 @@ export default function Login() {
 
   const normalizedPhone = useMemo(() => {
     const value = phone.trim().replace(/\D/g, "");
-    return /^1\d{10}$/.test(value) ? value : "";
+    return /^1\d{10}$/.test(value) ? "+86 " + value : "";
   }, [phone]);
 
   async function sendCode() {
@@ -36,20 +36,11 @@ export default function Login() {
     }
 
     try {
-      const { data, error } = await auth.signInWithOtp({
-        phone: normalizedPhone,
-        options: { shouldCreateUser: true },
+      const info = await auth.getVerification({
+        phone_number: normalizedPhone,
       });
 
-      if (error) {
-        throw new Error(error.message || "短信验证码发送失败。");
-      }
-
-      if (!data?.verifyOtp) {
-        throw new Error("验证码已发送，但登录验证器未初始化成功，请刷新页面重试。");
-      }
-
-      setVerification(() => data.verifyOtp);
+      setVerificationInfo(info);
       setCountdown(60);
 
       const timer = window.setInterval(() => {
@@ -78,7 +69,7 @@ export default function Login() {
       return;
     }
 
-    if (!verification) {
+    if (!verificationInfo) {
       setMsg("请先点击“获取验证码”。");
       return;
     }
@@ -91,32 +82,30 @@ export default function Login() {
     setSubmitting(true);
 
     try {
-      const { data, error } = await verification({ token: code.trim() });
+      const loginState = await auth.signInWithSms({
+        verificationInfo,
+        verificationCode: code.trim(),
+        phoneNum: normalizedPhone,
+      });
 
-      if (error) {
-        throw new Error(error.message || "验证码验证失败，请检查验证码。");
-      }
+      const accessToken = loginState?.accessToken;
+      const uid = loginState?.user?.uid ?? loginState?.user?.userId;
 
-      const accessToken = data?.session?.access_token;
-      const refreshToken = data?.session?.refresh_token;
-      const uid = data?.user?.id || data?.session?.user?.id || data?.session?.sub;
-
-      if (!accessToken || !refreshToken || !uid) {
-        throw new Error("登录成功，但网站登录态没有建立完整，请刷新后重试。");
+      if (!accessToken) {
+        throw new Error("验证码正确，但没有建立登录态，请刷新页面后重试。");
       }
 
       await setSessionCookie(
         accessToken,
-        refreshToken,
-        String(uid),
-        normalizedPhone
+        String(uid || "unknown"),
+        phone
       );
 
       router.push("/dashboard");
       router.refresh();
     } catch (error) {
       console.error("cloudbase login error", error);
-      setMsg(error instanceof Error ? error.message : "登录失败，请重试。");
+      setMsg(error instanceof Error ? error.message : "登录失败，请检查验证码后重试。");
     } finally {
       setSubmitting(false);
     }
@@ -184,7 +173,7 @@ export default function Login() {
             <button
               type="button"
               className="btn btn-ghost auth-code-btn"
-              disabled={countdown > 0 || !normalizedPhone}
+              disabled={countdown > 0}
               onClick={sendCode}
             >
               {countdown > 0 ? countdown + "s" : "获取验证码"}
