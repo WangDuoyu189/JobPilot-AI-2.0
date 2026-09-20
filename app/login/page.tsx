@@ -16,14 +16,16 @@ function normalizePhone(input: string) {
 export default function Login() {
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
-  const [signup, setSignup] = useState(false);
-  const [verificationInfo, setVerificationInfo] = useState<any>(null);
+  const [verification, setVerification] = useState<(() => Promise<any>) | null>(null);
   const [countdown, setCountdown] = useState(0);
   const [msg, setMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
-  const normalizedPhone = useMemo(() => normalizePhone(phone), [phone]);
+  const normalizedPhone = useMemo(() => {
+    const value = phone.trim().replace(/\D/g, "");
+    return /^1\d{10}$/.test(value) ? value : "";
+  }, [phone]);
 
   async function sendCode() {
     setMsg("");
@@ -34,11 +36,20 @@ export default function Login() {
     }
 
     try {
-      const info = await auth.getVerification({
-        phone_number: normalizedPhone,
+      const { data, error } = await auth.signInWithOtp({
+        phone: normalizedPhone,
+        options: { shouldCreateUser: true },
       });
 
-      setVerificationInfo(info);
+      if (error) {
+        throw new Error(error.message || "短信验证码发送失败。");
+      }
+
+      if (!data?.verifyOtp) {
+        throw new Error("验证码已发送，但登录验证器未初始化成功，请刷新页面重试。");
+      }
+
+      setVerification(() => data.verifyOtp);
       setCountdown(60);
 
       const timer = window.setInterval(() => {
@@ -51,7 +62,7 @@ export default function Login() {
         });
       }, 1000);
 
-      setMsg("验证码已发送，请注意查收短信。");
+      setMsg("验证码已发送，请查收短信。");
     } catch (error) {
       console.error("send sms error", error);
       setMsg(error instanceof Error ? error.message : "验证码发送失败，请稍后重试。");
@@ -67,46 +78,45 @@ export default function Login() {
       return;
     }
 
-    if (!verificationInfo) {
-      setMsg("请先获取短信验证码。");
+    if (!verification) {
+      setMsg("请先点击“获取验证码”。");
       return;
     }
 
-    if (!/^\d{4,8}$/.test(code.trim())) {
-      setMsg("请输入收到的短信验证码。");
+    if (!/^\d{6}$/.test(code.trim())) {
+      setMsg("请输入 6 位短信验证码。");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      await auth.signInWithSms({
-        verificationInfo,
-        verificationCode: code.trim(),
-        phoneNum: normalizedPhone,
-      });
+      const { data, error } = await verification({ token: code.trim() });
 
-      const loginState: any = await auth.getLoginState();
-      const accessToken = loginState?.accessToken;
-      const uid =
-        loginState?.user?.uid ??
-        loginState?.user?.userId ??
-        loginState?.uid;
+      if (error) {
+        throw new Error(error.message || "验证码验证失败，请检查验证码。");
+      }
 
-      if (!accessToken) {
-        throw new Error("登录成功，但未能建立网站登录态，请重试。");
+      const accessToken = data?.session?.access_token;
+      const refreshToken = data?.session?.refresh_token;
+      const uid = data?.user?.id || data?.session?.user?.id || data?.session?.sub;
+
+      if (!accessToken || !refreshToken || !uid) {
+        throw new Error("登录成功，但网站登录态没有建立完整，请刷新后重试。");
       }
 
       await setSessionCookie(
         accessToken,
-        uid ? String(uid) : "pending",
+        refreshToken,
+        String(uid),
         normalizedPhone
       );
+
       router.push("/dashboard");
       router.refresh();
     } catch (error) {
       console.error("cloudbase login error", error);
-      setMsg(error instanceof Error ? error.message : "登录失败，请检查验证码后重试。");
+      setMsg(error instanceof Error ? error.message : "登录失败，请重试。");
     } finally {
       setSubmitting(false);
     }
@@ -117,70 +127,28 @@ export default function Login() {
       <div className="auth-brand">
         <Link href="/" className="brand">
           <span className="brand-mark">J</span>
-          <span>
-            JobPilot<span className="brand-accent"> AI</span>
-          </span>
+          <span>JobPilot<span className="brand-accent"> AI</span></span>
         </Link>
 
         <div className="auth-quote">
           <span>“</span>
-          <h1>
-            把求职准备做在
-            <br />
-            面试之前。
-          </h1>
+          <h1>把求职准备做在<br />面试之前。</h1>
           <p>简历分析、岗位匹配、面试准备，集中在一个清晰的工作台里。</p>
         </div>
 
         <div className="auth-mini-card">
-          <div>
-            <b>82%</b>
-            <small>平均匹配度</small>
-          </div>
-          <div>
-            <b>18</b>
-            <small>本周分析</small>
-          </div>
-          <div>
-            <b>06</b>
-            <small>待跟进岗位</small>
-          </div>
+          <div><b>82%</b><small>平均匹配度</small></div>
+          <div><b>18</b><small>本周分析</small></div>
+          <div><b>06</b><small>待跟进岗位</small></div>
         </div>
       </div>
 
       <div className="auth-panel-wrap">
         <form className="auth-panel" onSubmit={submit}>
           <div className="auth-panel-head">
-            <span className="eyebrow">PHONE LOGIN · V2</span>
-            <h2>{signup ? "创建你的求职工作台" : "欢迎回到 JobPilot"}</h2>
-            <p>
-              {signup
-                ? "手机号验证码注册，分析记录会自动保存。"
-                : "使用手机号验证码登录你的求职工作台。"}
-            </p>
-          </div>
-
-          <div className="auth-tabs">
-            <button
-              type="button"
-              className={!signup ? "active" : ""}
-              onClick={() => {
-                setSignup(false);
-                setMsg("");
-              }}
-            >
-              登录
-            </button>
-            <button
-              type="button"
-              className={signup ? "active" : ""}
-              onClick={() => {
-                setSignup(true);
-                setMsg("");
-              }}
-            >
-              注册
-            </button>
+            <span className="eyebrow">PHONE LOGIN</span>
+            <h2>欢迎回到 JobPilot</h2>
+            <p>使用中国大陆手机号和短信验证码登录，新用户会自动注册。</p>
           </div>
 
           <label htmlFor="phone">手机号</label>
@@ -189,7 +157,7 @@ export default function Login() {
             <input
               id="phone"
               className="auth-input auth-phone-input"
-              value={phone.replace(/^\+86/, "")}
+              value={phone}
               onChange={(event) => {
                 const raw = event.target.value.replace(/\D/g, "").slice(0, 11);
                 setPhone(raw);
@@ -207,11 +175,11 @@ export default function Login() {
               id="code"
               className="auth-input"
               value={code}
-              onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 8))}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
-              placeholder="请输入验证码"
+              placeholder="6 位验证码"
             />
             <button
               type="button"
@@ -223,18 +191,18 @@ export default function Login() {
             </button>
           </div>
 
-          <button className="btn btn-primary auth-submit" type="submit" disabled={submitting || !normalizedPhone || !code || !verificationInfo}>
-            {submitting ? "正在登录..." : signup ? "创建账号" : "登录"} <span>→</span>
+          <button
+            className="btn btn-primary auth-submit"
+            type="submit"
+            disabled={submitting}
+          >
+            {submitting ? "正在登录..." : "登录"} <span>→</span>
           </button>
 
-          {msg && (
-            <div className="auth-message" role="status">
-              {msg}
-            </div>
-          )}
+          {msg && <div className="auth-message" role="alert">{msg}</div>}
 
           <div className="auth-foot">
-            注册/登录即表示你同意服务条款与隐私说明。短信登录为中国大陆手机号验证。
+            登录即表示你同意服务条款与隐私说明。
           </div>
         </form>
       </div>
