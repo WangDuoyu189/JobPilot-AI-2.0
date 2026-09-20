@@ -151,7 +151,7 @@ export default function Login() {
       <div className="auth-panel-wrap">
         <form className="auth-panel" onSubmit={submit}>
           <div className="auth-panel-head">
-            <span className="eyebrow">WELCOME</span>
+            <span className="eyebrow">PHONE LOGIN · V2</span>
             <h2>{signup ? "创建你的求职工作台" : "欢迎回到 JobPilot"}</h2>
             <p>
               {signup
@@ -223,7 +223,7 @@ export default function Login() {
             </button>
           </div>
 
-          <button className="btn btn-primary auth-submit" type="submit" disabled={submitting}>
+          <button className="btn btn-primary auth-submit" type="submit" disabled={submitting || !normalizedPhone || !code || !verificationInfo}>
             {submitting ? "正在登录..." : signup ? "创建账号" : "登录"} <span>→</span>
           </button>
 
